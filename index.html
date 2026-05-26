@@ -1,1 +1,676 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
+<title>KEDAI KIA</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+
+body{
+background:#f5f5f5;
+}
+
+.card{
+border-radius:20px;
+}
+
+.logo{
+width:90px;
+height:90px;
+object-fit:contain;
+}
+
+.header{
+text-align:center;
+}
+
+.table th{
+background:#198754;
+color:white;
+}
+
+.invoice{
+border:1px dashed gray;
+padding:20px;
+border-radius:10px;
+}
+
+.ttd{
+margin-top:70px;
+text-align:right;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container py-5">
+
+<div class="card p-4 shadow">
+
+<div class="header">
+
+<img src="logo.png" class="logo">
+
+<h2>KEDAI KIA</h2>
+
+<p>
+Jl.Karantina Gg.Sudi No.19 B Medan
+</p>
+
+</div>
+
+<hr>
+
+<div class="row g-2">
+
+<div class="col-md-4">
+<input id="pelanggan"
+class="form-control"
+placeholder="Nama Pelanggan">
+</div>
+
+<div class="col-md-4">
+<input id="telepon"
+class="form-control"
+placeholder="No Telepon">
+</div>
+
+<div class="col-md-4">
+<select id="metode"
+class="form-select">
+
+<option>Cash</option>
+<option>Transfer</option>
+
+</select>
+</div>
+
+</div>
+
+<hr>
+
+<div class="row g-2">
+
+<div class="col-md-4">
+<input id="barang"
+class="form-control"
+placeholder="Nama Barang">
+</div>
+
+<div class="col-md-2">
+<input type="number"
+id="harga"
+class="form-control"
+placeholder="Harga">
+</div>
+
+<div class="col-md-2">
+<input type="number"
+id="jumlah"
+class="form-control"
+placeholder="Jumlah">
+</div>
+
+<div class="col-md-2">
+<button
+class="btn btn-success w-100"
+onclick="tambahBarang()">
+
+Tambah
+
+</button>
+</div>
+
+<div class="col-md-2">
+<button
+class="btn btn-danger w-100"
+onclick="returBarang()">
+
+Retur
+
+</button>
+</div>
+
+</div>
+
+<hr>
+
+<div class="invoice">
+
+<div class="d-flex justify-content-between">
+
+<div>
+
+<h5 id="invoice"></h5>
+
+<p id="tanggal"></p>
+
+</div>
+
+</div>
+
+<div class="table-responsive">
+
+<table class="table table-bordered">
+
+<thead>
+
+<tr>
+
+<th>No</th>
+<th>Barang</th>
+<th>Harga</th>
+<th>Qty</th>
+<th>Subtotal</th>
+<th>Aksi</th>
+
+</tr>
+
+</thead>
+
+<tbody id="tabel">
+
+</tbody>
+
+</table>
+
+</div>
+
+
+<div class="row">
+
+<div class="col-md-4">
+
+<label>Diskon (%)</label>
+
+<input
+type="number"
+id="diskon"
+class="form-control"
+value="0"
+onkeyup="hitung()">
+
+</div>
+
+<div class="col-md-4">
+
+<label>PPN (%)</label>
+
+<input
+type="number"
+id="ppn"
+class="form-control"
+value="11"
+onkeyup="hitung()">
+
+</div>
+
+<div class="col-md-4">
+
+<label>Bayar</label>
+
+<input
+type="number"
+id="bayar"
+class="form-control"
+onkeyup="hitung()">
+
+</div>
+
+</div>
+
+<hr>
+
+<h5>
+
+Subtotal :
+Rp <span id="subtotal">0</span>
+
+</h5>
+
+<h5>
+
+Diskon :
+Rp <span id="diskonRp">0</span>
+
+</h5>
+
+<h5>
+
+PPN :
+Rp <span id="ppnRp">0</span>
+
+</h5>
+
+<h4>
+
+Grand Total :
+Rp <span id="grandTotal">0</span>
+
+</h4>
+
+<h4>
+
+Kembalian :
+Rp <span id="kembalian">0</span>
+
+</h4>
+
+<div class="ttd">
+
+<p>Pemilik Toko</p>
+
+<br><br><br>
+
+<b>(KEDAI KIA)</b>
+
+</div>
+
+</div>
+
+
+<div class="mt-3 text-end">
+
+<button
+class="btn btn-danger"
+onclick="cetakPDF()">
+
+PDF
+
+</button>
+
+<button
+class="btn btn-success"
+onclick="exportExcel()">
+
+Excel
+
+</button>
+
+<button
+class="btn btn-primary"
+onclick="exportJSON()">
+
+JSON
+
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+
+let data=[];
+
+let noInv=
+"INV-"+Math.floor(Math.random()*10000);
+
+invoice.innerHTML=noInv;
+
+tanggal.innerHTML=
+new Date().toLocaleDateString("id-ID");
+
+
+function tambahBarang(){
+
+let barang=
+document.getElementById("barang").value;
+
+let harga=
+parseInt(
+document.getElementById("harga").value
+);
+
+let jumlah=
+parseInt(
+document.getElementById("jumlah").value
+);
+
+if(
+barang==""||
+isNaN(harga)||
+isNaN(jumlah)
+){
+
+alert("Isi data");
+
+return;
+
+}
+
+let subtotal=
+harga*jumlah;
+
+data.push({
+
+barang,
+harga,
+jumlah,
+subtotal
+
+});
+
+tampil();
+
+bersih();
+
+}
+
+
+function tampil(){
+
+let html="";
+
+data.forEach((d,i)=>{
+
+html+=`
+
+<tr>
+
+<td>${i+1}</td>
+
+<td>${d.barang}</td>
+
+<td>
+Rp ${d.harga.toLocaleString()}
+</td>
+
+<td>
+${d.jumlah}
+</td>
+
+<td>
+Rp ${d.subtotal.toLocaleString()}
+</td>
+
+<td>
+
+<button
+class="btn btn-danger btn-sm"
+onclick="hapus(${i})">
+
+X
+
+</button>
+
+</td>
+
+</tr>
+
+`;
+
+});
+
+tabel.innerHTML=html;
+
+hitung();
+
+}
+
+
+function hitung(){
+
+let total=
+data.reduce(
+(a,b)=>a+b.subtotal,
+0
+);
+
+let diskon=
+parseFloat(
+document.getElementById("diskon").value
+)||0;
+
+let ppn=
+parseFloat(
+document.getElementById("ppn").value
+)||0;
+
+let bayar=
+parseFloat(
+document.getElementById("bayar").value
+)||0;
+
+
+let diskonRp=
+(total*diskon)/100;
+
+let setelahDiskon=
+total-diskonRp;
+
+let ppnRp=
+(setelahDiskon*ppn)/100;
+
+let grand=
+setelahDiskon+ppnRp;
+
+let kembali=
+bayar-grand;
+
+subtotal.innerHTML=
+total.toLocaleString();
+
+diskonRp.innerHTML=
+diskonRp.toLocaleString();
+
+ppnRp.innerHTML=
+ppnRp.toLocaleString();
+
+grandTotal.innerHTML=
+grand.toLocaleString();
+
+kembalian.innerHTML=
+kembali.toLocaleString();
+
+}
+
+
+function hapus(i){
+
+data.splice(i,1);
+
+tampil();
+
+}
+
+function returBarang(){
+
+let x=
+prompt("Nomor barang:");
+
+hapus(x-1);
+
+}
+
+
+function bersih(){
+
+barang.value="";
+harga.value="";
+jumlah.value="";
+
+}
+
+
+function exportJSON(){
+
+let blob=
+new Blob(
+[
+JSON.stringify(
+data,
+null,
+4
+)
+],
+{
+type:
+"application/json"
+}
+);
+
+let a=
+document.createElement(
+"a"
+);
+
+a.href=
+URL.createObjectURL(
+blob
+);
+
+a.download=
+"kedai_kia.json";
+
+a.click();
+
+}
+
+
+function exportExcel(){
+
+let wb=
+XLSX.utils.book_new();
+
+let ws=
+XLSX.utils.json_to_sheet(
+data
+);
+
+XLSX.utils.book_append_sheet(
+wb,
+ws,
+"Pesanan"
+);
+
+XLSX.writeFile(
+wb,
+"KEDAI_KIA.xlsx"
+);
+
+}
+
+
+
+async function cetakPDF(){
+
+const {jsPDF}=
+window.jspdf;
+
+let doc=
+new jsPDF();
+
+doc.setFontSize(18);
+
+doc.text(
+"KEDAI KIA",
+75,
+15
+);
+
+doc.setFontSize(10);
+
+doc.text(
+"Jl.Karantina Gg.Sudi No.19 B Medan",
+50,
+22
+);
+
+doc.line(
+10,
+30,
+200,
+30
+);
+
+doc.text(
+"Invoice : "+noInv,
+10,
+40
+);
+
+doc.text(
+"Nama : "+
+pelanggan.value,
+10,
+48
+);
+
+doc.text(
+"No HP : "+
+telepon.value,
+10,
+56
+);
+
+doc.text(
+"Metode : "+
+metode.value,
+10,
+64
+);
+
+let y=80;
+
+data.forEach((d,i)=>{
+
+doc.text(
+`${i+1}. ${d.barang} Qty:${d.jumlah} Rp${d.subtotal}`,
+10,
+y
+);
+
+y+=10;
+
+});
+
+y+=20;
+
+doc.text(
+"Total : Rp "+
+grandTotal.innerText,
+130,
+y
+);
+
+y+=30;
+
+doc.text(
+"Pemilik Toko",
+130,
+y
+);
+
+y+=30;
+
+doc.text(
+"(KEDAI KIA)",
+130,
+y
+);
+
+doc.save(
+"Invoice_KEDAI_KIA.pdf"
+);
+
+}
+
+</script>
+
+</body>
+</html>
